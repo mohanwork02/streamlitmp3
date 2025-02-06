@@ -13,7 +13,8 @@ import openai
 load_dotenv()
 
 # Set OpenAI API Key (less recommended, but works if .env not used)
-openai.api_key = os.getenv("OPENAI_API_KEY")
+#openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = st.secrets["openai"]["api_key"]
 
 #os.environ["OPENAI_API_KEY"] = "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"
 
