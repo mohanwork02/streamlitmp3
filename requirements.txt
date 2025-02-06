@@ -5,3 +5,4 @@ openai
 langchain
 python-dotenv
 langchain_openai
+langchain_openai
