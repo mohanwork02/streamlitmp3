@@ -45,7 +45,7 @@ if uploaded_file is not None:
                     file.write(transcript_text)
             else:
                 st.error("Failed to get transcription text.")
-                return
+                st.stop()  # Stop the execution here if no transcription text is returned
 
         # Load the document and process it
         loader = TextLoader(transcript_path)
@@ -114,4 +114,3 @@ if uploaded_file is not None:
             os.remove(audio_path)
         if os.path.exists(transcript_path):  # Ensure transcript_path exists before attempting to remove it
             os.remove(transcript_path)
-
