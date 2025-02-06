@@ -1,6 +1,6 @@
 streamlit
 numpy
-faiss-cpu
+faiss-cpu==1.7.1
 openai
 langchain
 python-dotenv
