@@ -43,7 +43,8 @@ if uploaded_file is not None:
                     file.write(transcript_text)
             else:
                 st.error("Failed to get transcription text.")
-                return
+                # Removed return, and added an early exit mechanism:
+                st.stop()
 
         # Load the document and process it
         loader = TextLoader(transcript_path)
