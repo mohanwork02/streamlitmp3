@@ -2,11 +2,10 @@ import streamlit as st
 import os
 import numpy as np
 import faiss
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.chat_models import ChatOpenAI  # Correct import for ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
-
 from dotenv import load_dotenv
 import openai
 
@@ -14,17 +13,12 @@ import openai
 load_dotenv()
 
 # Set OpenAI API Key (less recommended, but works if .env not used)
-#os.environ["OPENAI_API_KEY"] = "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"
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Streamlit app
 st.title("🎙️ Audio Transcription & Q&A Bot")
 
 uploaded_file = st.file_uploader("Choose an MP3 audio file", type="mp3")
-
-# Initialize paths for transcript and audio
-audio_path = ""
-transcript_path = ""
 
 if uploaded_file is not None:
     audio_path = "uploaded_audio.mp3"  # Temporary file
@@ -36,17 +30,22 @@ if uploaded_file is not None:
     try:
         with st.spinner("Transcribing audio..."):  # Show a spinner
             with open(audio_path, "rb") as audio_file:
-                transcript = openai.audio.transcriptions.create(
+                transcript_response = openai.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
                     response_format="text"
                 )
+            # Extract text from response
+            transcript_text = transcript_response.get("text", "")
+            if transcript_text:
+                transcript_path = "transcript.txt"
+                with open(transcript_path, "w") as file:
+                    file.write(transcript_text)
+            else:
+                st.error("Failed to get transcription text.")
+                return
 
-        # Save the transcript
-        transcript_path = "transcript.txt"
-        with open(transcript_path, "w") as file:
-            file.write(transcript)
-
+        # Load the document and process it
         loader = TextLoader(transcript_path)
         documents = loader.load()
 
@@ -70,9 +69,9 @@ if uploaded_file is not None:
 
         query = st.text_input("Ask me anything about the audio:")
 
-        if st.button("Submit"): # Button to trigger query
+        if st.button("Submit"):  # Button to trigger query
             if query:
-                with st.spinner("Generating response..."): # Spinner for LLM response
+                with st.spinner("Generating response..."):  # Spinner for LLM response
                     query_embedding = np.array([embeddings.embed_query(query)]).astype('float32')
 
                     k = min(5, len(processed_docs))
@@ -101,16 +100,15 @@ if uploaded_file is not None:
                         )
 
                         final_answer = llm.invoke(prompt)
-                        st.write("Answer:", final_answer.content) # Display the answer
+                        st.write("Answer:", final_answer.content)  # Display the answer
 
     except Exception as e:
-        st.error(f"An error occurred: {e}") # Display errors in Streamlit
-        # Optionally, print the error to the console for debugging:
+        st.error(f"An error occurred: {e}")  # Display errors in Streamlit
         import traceback
-        traceback.print_exc() # Print detailed traceback to the console
+        traceback.print_exc()  # Print detailed traceback to the console
 
-    finally: # Clean up the temporary audio file
+    finally:  # Clean up the temporary audio file
         if os.path.exists(audio_path):
             os.remove(audio_path)
-        if transcript_path and os.path.exists(transcript_path):
-            os.remove(transcript_path)  # Ensure transcript exists before removing
+        if os.path.exists(transcript_path):
+            os.remove(transcript_path)
